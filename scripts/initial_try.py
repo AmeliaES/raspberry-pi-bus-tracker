@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-import RGB1602
+import RGB1602 as RGB1602
 import time
 import math
 colorR = 64
