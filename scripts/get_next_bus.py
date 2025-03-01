@@ -9,9 +9,8 @@ import pdb
 import csv
 from typing import List
 
-
 # Set up the LCD screen, 16 characters wide and 2 lines long
-lcd = RGB1602.RGB1602(16, 2)
+LCD = RGB1602.RGB1602(16, 2)
 
 # Load environment variables from .env
 load_dotenv()
@@ -19,16 +18,16 @@ load_dotenv()
 # Get API key and stop ID from environment variables in the .env file
 API_KEY = os.getenv("API_KEY")
 STOP_ID = os.getenv("STOP_ID")
-
-# Set up the API URL and headers (https://tfe-opendata.readme.io/docs/authentication-1)
-# The URL specified is for live_bus_times (https://tfe-opendata.readme.io/docs/live-bus-times)
-API_URL = f"https://tfe-opendata.com/api/v1/live_bus_times/{STOP_ID}"
+# Set up the API header (https://tfe-opendata.readme.io/docs/authentication-1)
 HEADERS = {"Authorization": f"Token {API_KEY}"}
 
+
 # Define function to return a json of bus times from specified bus stop
-def get_bus_times():
+def get_bus_times(stop_id):
     print(f"{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')} - Requesting bus times from API...")
-    response = requests.get(API_URL, headers=HEADERS)
+    # The URL specified is for live_bus_times (https://tfe-opendata.readme.io/docs/live-bus-times)
+    api_url = f"https://tfe-opendata.com/api/v1/live_bus_times/{stop_id}"
+    response = requests.get(api_url, headers=HEADERS)
     if response.status_code == 200:
         return response.json()
     else:
@@ -52,6 +51,7 @@ def process_response(departures):
         })
     return data_to_save
 
+
 def save_dict_to_csv(list_of_dict: List[dict], filename):
     
     with open(filename, 'w', newline='') as file:
@@ -64,7 +64,7 @@ def save_dict_to_csv(list_of_dict: List[dict], filename):
 # Define function to update bus times and handle errors
 def update_bus_times():
     # Get bus times from the API
-    bus_times = get_bus_times()
+    bus_times = get_bus_times(STOP_ID)
     
     # Extract the "departures" list of dictionaries from the bus_times json
     departures = bus_times[0]['departures']
@@ -75,6 +75,7 @@ def update_bus_times():
 
     # Save the list of dictionaries to a csv file
     save_dict_to_csv(dicts_to_save, "bus_times.csv")
+
 
 def read_csv(filename):
     with open(filename, 'r') as file:
@@ -91,7 +92,7 @@ def set_lcd_colour(color: str):
     if color not in possible_colors:
         raise ValueError(f"Invalid color: {color}. Must be one of {possible_colors.keys()}")
     rgb = possible_colors[color]
-    lcd.setRGB(rgb[0], rgb[1], rgb[2])
+    LCD.setRGB(rgb[0], rgb[1], rgb[2])
 
 
 def print_to_lcd(bus_times):
@@ -101,9 +102,9 @@ def print_to_lcd(bus_times):
     displayTime = next_bus['displayTime']
 
     # Print message for when next bus will depart and its bus number
-    lcd.setCursor(0, 0)
-    lcd.printout("") # clear the screen
-    lcd.printout(f"Next {routeName}: {displayTime}")
+    LCD.setCursor(0, 0)
+    LCD.printout("") # clear the screen
+    LCD.printout(f"Next {routeName}: {displayTime}")
 
     # Calculate the minutes until the next bus
     departureTimeUTC_str = next_bus['departureTimeUTC']
@@ -112,19 +113,19 @@ def print_to_lcd(bus_times):
     minutes = int((departureTimeUTC - currentTime).total_seconds() / 60)
 
     # Print message depending on how many minutes until the next bus
-    lcd.setCursor(0, 1)
-    lcd.printout("") # clear the screen
+    LCD.setCursor(0, 1)
+    LCD.printout("") # clear the screen
     if minutes <= 10 and minutes > 5:
-        lcd.printout("Leave now!")
+        LCD.printout("Leave now!")
         set_lcd_colour("green")
     elif minutes == 4 or minutes == 5:
-        lcd.printout("Walk quickly!")
+        LCD.printout("Walk quickly!")
         set_lcd_colour("orange")
     elif minutes < 4:
-        lcd.printout("Missed this bus!")
+        LCD.printout("Missed this bus!")
         set_lcd_colour("red")
     else:
-        lcd.printout(f"in {minutes} mins")
+        LCD.printout(f"in {minutes} mins")
         set_lcd_colour("green")
 
 def main():
