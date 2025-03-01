@@ -87,8 +87,8 @@ def set_lcd_colour(color: str):
     possible_colors = {
         "red": (255, 0, 0),
         "orange": (255, 165, 0),
-        "green": (41, 156, 6),
-        "blue": (2, 131, 163)
+        "green": (53, 181, 70),
+        "blue": (63, 168, 209)
     }
     if color not in possible_colors:
         raise ValueError(f"Invalid color: {color}. Must be one of {possible_colors.keys()}")
@@ -96,25 +96,32 @@ def set_lcd_colour(color: str):
     LCD.setRGB(rgb[0], rgb[1], rgb[2])
 
 
-def print_to_lcd(bus_times):
-    # Get the first bus from the list of dictionaries
-    next_bus = bus_times[0]
+def minutes_until_bus(bus):
+    # Calculate the minutes until the next bus
+    departureTimeUTC_str = bus['departureTimeUTC']
+    departureTimeUTC = datetime.strptime(departureTimeUTC_str, '%Y-%m-%d %H:%M:%S%z').replace(tzinfo=timezone.utc)
+    currentTime = datetime.now(timezone.utc)
+    minutes = int((departureTimeUTC - currentTime).total_seconds() / 60)
+    return minutes
+
+
+def get_next_available_bus(bus_times):
+    for bus in bus_times:
+        minutes = minutes_until_bus(bus)
+        if minutes >= 4:
+            return bus
+
+
+def print_to_lcd(next_bus):
     routeName = next_bus['routeName']
     displayTime = next_bus['displayTime']
-
-    second_bus = bus_times[1]
-    second_bus_time = second_bus['displayTime']
 
     # Print message for when next bus will depart and its bus number
     LCD.setCursor(0, 0)
     LCD.printout("") # clear the screen
     LCD.printout(f"Next {routeName}: {displayTime}")
 
-    # Calculate the minutes until the next bus
-    departureTimeUTC_str = next_bus['departureTimeUTC']
-    departureTimeUTC = datetime.strptime(departureTimeUTC_str, '%Y-%m-%d %H:%M:%S%z').replace(tzinfo=timezone.utc)
-    currentTime = datetime.now(timezone.utc)
-    minutes = int((departureTimeUTC - currentTime).total_seconds() / 60)
+    minutes = minutes_until_bus(next_bus)
 
     # Print message depending on how many minutes until the next bus
     LCD.setCursor(0, 1)
@@ -122,23 +129,29 @@ def print_to_lcd(bus_times):
     if 5 < minutes <= 10:
         LCD.printout("Leave now!")
         set_lcd_colour("green")
-    elif minutes in [4,5]:
+    elif minutes == 5:
         LCD.printout("Walk quickly!")
         set_lcd_colour("orange")
-    elif minutes < 4:
-        LCD.printout(f"         {second_bus_time}")
+    elif minutes == 4:
+        LCD.printout(f"Run!")
         set_lcd_colour("red")
     else:
         LCD.printout(f"in {minutes} mins")
         set_lcd_colour("blue")
 
+
 def main():
+    # Calls the API and saves list of bus time dictionaries to a csv file
     update_bus_times()
-    
+
+    # Get list of dictionaries of buses from the csv file
     bus_times = read_csv("bus_times.csv")
+
+    # Get the next bus time, that's at least 4 minutes away
+    bus_time = get_next_available_bus(bus_times)
    
     # Print to the lcd screen
-    print_to_lcd(bus_times)
+    print_to_lcd(bus_time)
 
 
 main()
