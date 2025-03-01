@@ -87,7 +87,8 @@ def set_lcd_colour(color: str):
     possible_colors = {
         "red": (255, 0, 0),
         "orange": (255, 165, 0),
-        "green": (0, 255, 0)
+        "green": (41, 156, 6),
+        "blue": (2, 131, 163)
     }
     if color not in possible_colors:
         raise ValueError(f"Invalid color: {color}. Must be one of {possible_colors.keys()}")
@@ -100,6 +101,9 @@ def print_to_lcd(bus_times):
     next_bus = bus_times[0]
     routeName = next_bus['routeName']
     displayTime = next_bus['displayTime']
+
+    second_bus = bus_times[1]
+    second_bus_time = second_bus['displayTime']
 
     # Print message for when next bus will depart and its bus number
     LCD.setCursor(0, 0)
@@ -115,33 +119,23 @@ def print_to_lcd(bus_times):
     # Print message depending on how many minutes until the next bus
     LCD.setCursor(0, 1)
     LCD.printout("") # clear the screen
-    if minutes <= 10 and minutes > 5:
+    if 5 < minutes <= 10:
         LCD.printout("Leave now!")
         set_lcd_colour("green")
-    elif minutes == 4 or minutes == 5:
+    elif minutes in [4,5]:
         LCD.printout("Walk quickly!")
         set_lcd_colour("orange")
     elif minutes < 4:
-        LCD.printout("Missed this bus!")
+        LCD.printout(f"         {second_bus_time}")
         set_lcd_colour("red")
     else:
         LCD.printout(f"in {minutes} mins")
-        set_lcd_colour("green")
+        set_lcd_colour("blue")
 
 def main():
-    # Read the bus times from the csv file
-    bus_times = read_csv("bus_times.csv")
-
-    # Check the time the API was called
-    APIrequestTime_str = bus_times[0]['APIrequestTime']
+    update_bus_times()
     
-    # If the API request time is more than 3 minutes ago, refresh the csv file and reload the new data
-    current_time = datetime.now(timezone.utc)
-    APIrequestTime = datetime.strptime(APIrequestTime_str, '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
-
-    if ( current_time - APIrequestTime  ).total_seconds() >= 3 * 60:
-        update_bus_times()
-        bus_times = read_csv("bus_times.csv")
+    bus_times = read_csv("bus_times.csv")
    
     # Print to the lcd screen
     print_to_lcd(bus_times)
