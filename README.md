@@ -35,26 +35,4 @@ For extra secruity this file should also be encrypted. See: https://emilylahren.
 The script [`scripts/get_next_bus.py`](scripts/get_next_bus.py) prints text about when the next bus is (from a specific bus stop specified in `.env`) to a small LCD screen connected to a Raspberry Pi.
 Once the API key and bus stop ID is in the .env file, then the script should run. It doesn't need any other input.
 The output from the script, printed to the LCD screen, looks a bit like this:
-```
-Next 99 bus at 11:40
-in 11 mins
-```
-Waits for 30 seconds then prints again:
-```
-Next 99: at 11:40
-Leave now!
-Next 99: at 11:40
-Walk quickly!
-Next 99: at 11:40
-Walk quickly!
-Next 99: at 11:40
-Walk quickly!
-Next 99: at 11:40
-Walk quickly!
-Next 99: at 11:40
-Missed this bus!
-```
-This loop keeps going until the bus departure time is greater than the current time.
-
-Here's an example output of the LCD screen:
 ![](images/lcd_screen_example.jpeg)
