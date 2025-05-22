@@ -43,12 +43,15 @@ def process_response(departures):
 
     for bus in departures:
         departureTime = bus['departureTime']
+        # departureTime is incorrect in the API response, so we need to convert it to UTC
         departureTimeUTC = datetime.fromisoformat(departureTime).astimezone(timezone.utc)
+        # Use this correct time to get a displayTime, as API response displayTime is also incorrect
+        displayTime = departureTimeUTC.strftime('%H:%M')
         data_to_save.append({
             'APIrequestTime': APIrequestTime,
             'routeName': bus['routeName'],
             'departureTimeUTC': departureTimeUTC,
-            'displayTime': bus['displayTime']
+            'displayTime': displayTime
         })
     return data_to_save
 
