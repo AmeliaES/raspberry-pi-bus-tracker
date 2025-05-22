@@ -8,6 +8,7 @@ import RGB1602 as RGB1602 # RGC1602.py must be in the same directory as this scr
 import pdb
 import csv
 from typing import List
+from zoneinfo import ZoneInfo
 
 # Set up the LCD screen, 16 characters wide and 2 lines long
 LCD = RGB1602.RGB1602(16, 2)
@@ -99,8 +100,8 @@ def set_lcd_colour(color: str):
 def minutes_until_bus(bus):
     # Calculate the minutes until the next bus
     departureTimeUTC_str = bus['departureTimeUTC']
-    departureTimeUTC = datetime.strptime(departureTimeUTC_str, '%Y-%m-%d %H:%M:%S%z').replace(tzinfo=timezone.utc)
-    currentTime = datetime.now(timezone.utc)
+    departureTimeUTC = datetime.strptime(departureTimeUTC_str, '%Y-%m-%d %H:%M:%S%z').replace(tzinfo=ZoneInfo("Europe/London"))
+    currentTime = datetime.now(ZoneInfo("Europe/London"))
     minutes = int((departureTimeUTC - currentTime).total_seconds() / 60)
     return minutes
 
